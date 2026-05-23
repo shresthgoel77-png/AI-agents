@@ -2,95 +2,138 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 import warnings
 
-# Hide warning messages
+# -----------------------------
+# Configuration
+# -----------------------------
+MODEL_NAME = "HuggingFaceTB/SmolLM2-360M-Instruct"
+MAX_HISTORY = 6
+MAX_NEW_TOKENS = 80
+
 warnings.filterwarnings("ignore")
 
-# Model name from Hugging Face
-model_name = "HuggingFaceTB/SmolLM2-360M-Instruct"
+# -----------------------------
+# Device setup
+# -----------------------------
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
-print("Loading model...")
+print(f"Using device: {device}")
+print("Loading model...\n")
 
+# -----------------------------
 # Load tokenizer
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+# -----------------------------
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
-# Set padding token
-tokenizer.pad_token = tokenizer.unk_token
+# Better padding setup
+if tokenizer.pad_token is None:
+    tokenizer.pad_token = tokenizer.eos_token
 
-# Load language model
+# -----------------------------
+# Load model
+# -----------------------------
 model = AutoModelForCausalLM.from_pretrained(
-    model_name,
-    device_map="cpu",
-    torch_dtype=torch.float32
-)
+    MODEL_NAME,
+    torch_dtype=torch.float16 if device == "cuda" else torch.float32
+).to(device)
 
-# Initial system prompt
+model.eval()
+
+# -----------------------------
+# Initial conversation
+# -----------------------------
 messages = [
     {
         "role": "system",
         "content": (
             "You are a helpful AI assistant. "
-            "Give short and concise answers in 2-3 lines."
+            "Reply briefly and clearly in 2-3 lines."
         )
     }
 ]
 
-print("Chatbot started. Type 'exit' to quit.\n")
+print("Chatbot started.")
+print("Type 'exit' or 'quit' to stop.\n")
 
+# -----------------------------
 # Chat loop
+# -----------------------------
 while True:
 
-    # Take user input
-    user_input = input("> ")
+    try:
+        user_input = input("> ").strip()
 
-    # Exit condition
-    if user_input.lower() == "exit":
+        # Exit conditions
+        if user_input.lower() in ["exit", "quit"]:
+            print("Goodbye!")
+            break
+
+        if not user_input:
+            continue
+
+        # Store user message
+        messages.append({
+            "role": "user",
+            "content": user_input
+        })
+
+        # Keep recent history
+        messages = [messages[0]] + messages[-MAX_HISTORY:]
+
+        # -----------------------------
+        # Tokenize conversation
+        # -----------------------------
+        inputs = tokenizer.apply_chat_template(
+            messages,
+            tokenize=True,
+            add_generation_prompt=True,
+            return_tensors="pt",
+            truncation=True,
+            max_length=1024
+        ).to(device)
+
+        # -----------------------------
+        # Generate response
+        # -----------------------------
+        with torch.inference_mode():
+
+            outputs = model.generate(
+                inputs,
+                max_new_tokens=MAX_NEW_TOKENS,
+                temperature=0.7,
+                top_p=0.9,
+                do_sample=True,
+                repetition_penalty=1.15,
+                no_repeat_ngram_size=3,
+                pad_token_id=tokenizer.eos_token_id,
+                eos_token_id=tokenizer.eos_token_id
+            )
+
+        # -----------------------------
+        # Decode only new tokens
+        # -----------------------------
+        response_tokens = outputs[0][inputs.shape[-1]:]
+
+        response = tokenizer.decode(
+            response_tokens,
+            skip_special_tokens=True
+        ).strip()
+
+        # Fallback response
+        if not response:
+            response = "I couldn't generate a response."
+
+        # Print response
+        print(f"\nBot: {response}\n")
+
+        # Save assistant response
+        messages.append({
+            "role": "assistant",
+            "content": response
+        })
+
+    except KeyboardInterrupt:
+        print("\nExiting chatbot...")
         break
 
-    # Store user message
-    messages.append({
-        "role": "user",
-        "content": user_input
-    })
-
-    # Keep only recent conversation history
-    messages = [messages[0]] + messages[-10:]
-
-    # Convert conversation into model tokens
-    tokenized = tokenizer.apply_chat_template(
-        messages,
-        tokenize=True,
-        add_generation_prompt=True,
-        return_tensors="pt",
-        return_dict=True,
-        max_length=512
-    )
-
-    # Generate AI response
-    with torch.inference_mode():
-
-        outputs = model.generate(
-            tokenized["input_ids"],
-            attention_mask=tokenized["attention_mask"],
-            max_new_tokens=60,
-            temperature=0.5,
-            top_p=0.8,
-            do_sample=True,
-            repetition_penalty=1.3,
-            no_repeat_ngram_size=3,
-            pad_token_id=tokenizer.pad_token_id
-        )
-
-    # Decode generated tokens into readable text
-    response = tokenizer.decode(
-        outputs[0][tokenized["input_ids"].shape[-1]:],
-        skip_special_tokens=True
-    )
-
-    # Print bot response
-    print(f"Bot: {response}\n")
-
-    # Save assistant response into memory
-    messages.append({
-        "role": "assistant",
-        "content": response
-    })
+    except Exception as e:
+        print(f"\nError: {e}\n")
