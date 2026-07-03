@@ -11,6 +11,7 @@ paragraphs = [
     "Employees receive 10 fully paid sick days per calendar year. If an illness extends beyond three consecutive business days, a formal note from a licensed medical professional is required by HR.",
     "Under our hybrid model, team members are eligible for flexible arrangements. Employees can work remotely up to 3 days per week, provided they coordinate their in-office days with their direct supervisor.",
 ]
+
 paragraph_embeddings = model.encode(paragraphs)
 while True :
     user_query = input("please enter your query")
