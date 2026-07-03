@@ -18,6 +18,7 @@ Covers:
 15. Conversation memory
 16. Evaluation ideas
 
+
 Install:
 pip install sentence-transformers faiss-cpu transformers torch
 
