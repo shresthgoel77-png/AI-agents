@@ -2,6 +2,7 @@ from flask import Flask, request  # FIX 1: Imported request
 
 app = Flask(__name__)
 
+
 html_form = """
 <!DOCTYPE html>
 <html lang="en">
