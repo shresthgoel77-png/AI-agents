@@ -3,7 +3,6 @@ import numpy as np
 # Fixed typo: SentenceTransformer (with an 'r')
 from sentence_transformers import SentenceTransformer
 
-
 documents = [
     "Python is a popular programming language used for AI and web development.",
     "RAG stands for Retrieval-Augmented Generation. It combines retrieval and generation.",
