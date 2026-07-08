@@ -1,6 +1,7 @@
 import requests
 import json
 
+
 def emotion_detector(text_to_analyse):
     """
     Function to run emotion detection using the Watson NLP library
