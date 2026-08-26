@@ -1,0 +1,30 @@
+from google import genai
+
+client = genai.Client()
+
+def calculator(a, b):
+    return a + b
+
+def agent(task):
+    response = client.interactions.create(
+        model="gemini-3.7-flash",
+        input=task,
+        tools=[{
+            "type": "function",
+            "name": "calculator",
+            "description": "Add two numbers",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "a": {"type": "number"},
+                    "b": {"type": "number"}
+                },
+                "required": ["a", "b"]
+            }
+        }]
+    )
+
+    # For a first learning example, inspect what Gemini decided to do.
+    print(response)
+
+agent("What is 25 + 17?")
