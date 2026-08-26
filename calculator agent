@@ -1,30 +1,145 @@
+import json
 from google import genai
 
 client = genai.Client()
 
-def calculator(a, b):
-    return a + b
+# -------------------------
+# 1. Our tools
+# -------------------------
 
-def agent(task):
-    response = client.interactions.create(
+def calculator(a, b, operation):
+    if operation == "add":
+        return a + b
+    if operation == "subtract":
+        return a - b
+    if operation == "multiply":
+        return a * b
+    if operation == "divide":
+        return a / b
+
+    return "Unknown operation"
+
+
+def save_note(note):
+    with open("notes.txt", "a") as f:
+        f.write(note + "\n")
+
+    return "Note saved successfully."
+
+
+# -------------------------
+# 2. Tell Gemini about tools
+# -------------------------
+
+tools = [
+    {
+        "type": "function",
+        "name": "calculator",
+        "description": "Perform a calculation on two numbers.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "a": {"type": "number"},
+                "b": {"type": "number"},
+                "operation": {
+                    "type": "string",
+                    "enum": [
+                        "add",
+                        "subtract",
+                        "multiply",
+                        "divide"
+                    ]
+                }
+            },
+            "required": ["a", "b", "operation"]
+        }
+    },
+    {
+        "type": "function",
+        "name": "save_note",
+        "description": "Save an important note for the user.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "note": {"type": "string"}
+            },
+            "required": ["note"]
+        }
+    }
+]
+
+
+# -------------------------
+# 3. Tool execution
+# -------------------------
+
+def execute_tool(name, arguments):
+
+    if name == "calculator":
+        return calculator(**arguments)
+
+    if name == "save_note":
+        return save_note(**arguments)
+
+    return "Tool not found"
+
+
+# -------------------------
+# 4. The agent
+# -------------------------
+
+def agent(user_message):
+
+    interaction = client.interactions.create(
         model="gemini-3.7-flash",
-        input=task,
-        tools=[{
-            "type": "function",
-            "name": "calculator",
-            "description": "Add two numbers",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "a": {"type": "number"},
-                    "b": {"type": "number"}
-                },
-                "required": ["a", "b"]
-            }
-        }]
+        input=user_message,
+        tools=tools
     )
 
-    # For a first learning example, inspect what Gemini decided to do.
-    print(response)
+    # Gemini may decide to use one or more tools
+    for step in interaction.steps:
 
-agent("What is 25 + 17?")
+        if step.type == "function_call":
+
+            print(f"\n🔧 Using tool: {step.name}")
+
+            result = execute_tool(
+                step.name,
+                step.arguments
+            )
+
+            # Give the tool result back to Gemini
+            interaction = client.interactions.create(
+                model="gemini-3.7-flash",
+                previous_interaction_id=interaction.id,
+                input=[
+                    {
+                        "type": "function_result",
+                        "name": step.name,
+                        "call_id": step.id,
+                        "result": [
+                            {
+                                "type": "text",
+                                "text": json.dumps(result)
+                            }
+                        ]
+                    }
+                ],
+                tools=tools
+            )
+
+    return interaction.output_text
+
+
+# -------------------------
+# 5. Chat with the agent
+# -------------------------
+
+while True:
+
+    user = input("\nYou: ")
+
+    if user.lower() in ["exit", "quit"]:
+        break
+
+    print("Agent:", agent(user))
