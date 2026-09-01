@@ -10,7 +10,6 @@ def mock_ai_classifier(text):
         # The AI is confused by ambiguous text
         return "Neutral", 0.52
 
-
 def human_in_the_loop_system(text):
     # Step 1: Automated AI prediction
     prediction, confidence = mock_ai_classifier(text)
