@@ -1,0 +1,53 @@
+def mock_ai_classifier(text):
+    """Simulates an AI model returning a prediction and a confidence score (0 to 1)."""
+    text_lower = text.lower()
+
+    if "love" in text_lower or "amazing" in text_lower:
+        return "Positive", 0.95
+    elif "hate" in text_lower or "terrible" in text_lower:
+        return "Negative", 0.91
+    else:
+        # The AI is confused by ambiguous text
+        return "Neutral", 0.52
+
+
+def human_in_the_loop_system(text):
+    # Step 1: Automated AI prediction
+    prediction, confidence = mock_ai_classifier(text)
+
+    # Define our confidence threshold
+    THRESHOLD = 0.80
+
+    print(f"\nAnalyzing text: '{text}'")
+
+    # Step 2 & 3: Evaluate confidence and decide whether to loop in a human
+    if confidence >= THRESHOLD:
+        print(f" -> [Automated] AI is confident ({confidence}).")
+        print(f" -> Final Result: {prediction}")
+        return prediction
+    else:
+        print(
+            f" -> [HITL Triggered] AI confidence is low ({confidence}). Asking a human..."
+        )
+
+        # Simulating human input (in a real app, this would be a UI prompt or API call)
+        # For demonstration, we'll mimic a human reviewing an ambiguous statement.
+        print(" -> Human reviewer steps in to inspect the context.")
+        human_correction = input(
+            "Please provide the correct label (Positive / Negative / Neutral): "
+        )
+
+        # Step 4: Integrate the human feedback
+        print(
+            f" -> System updated with human feedback: '{human_correction}' logged for model retraining."
+        )
+        return human_correction
+
+# --- Test Cases ---
+
+# Case 1: High confidence (No human needed)
+human_in_the_loop_system("I love this application!")
+
+# Case 2: Low confidence / Ambiguous (Human intervention required)
+# Try running this and typing a label when prompted if you test it locally.
+# human_in_the_loop_system("The weather today is okay, I suppose.")
