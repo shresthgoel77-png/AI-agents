@@ -24,3 +24,16 @@ inputs = {"goal": "Create a greeting script"}
 print("--- Step 1: Agent starts working ---")
 for event in app.stream(inputs, config):
     pass
+current_state = app.get_state(config)
+proposed_plan = current_state.values.get("plan")
+
+print(f"\n💡 Agent's Proposed Plan: {proposed_plan}")
+choice = input("👤 Do you want to approve this execution? (y/n): ").strip().lower()
+
+if choice == 'y':
+    print("\n✅ Approved! Resuming graph execution...")
+    # Passing None to app.stream resumes the graph from where it paused
+    for event in app.stream(None, config):
+        pass
+else:
+    print("\n❌ Rejected! Agent workflow halted safely.")
