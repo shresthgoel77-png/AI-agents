@@ -17,3 +17,10 @@ workflow.add_node("execute_action",execute_action)
 workflow.add_edge(START,"generate_plan")
 workflow.add_edge("generate_plan","execute_action")
 workflow.add_edge("execute_action",END)
+memory = MemorySaver()
+app = workflow.compile(checkpointer = memory,interrupt_before=["execute_action"])
+config = {"configurable": {"thread_id": "1"}}
+inputs = {"goal": "Create a greeting script"}
+print("--- Step 1: Agent starts working ---")
+for event in app.stream(inputs, config):
+    pass
