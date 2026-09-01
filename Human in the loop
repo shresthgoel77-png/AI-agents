@@ -1,1 +1,13 @@
-human in the loop for ai agents
+from langgraph.graph import StateGraph,START,END
+from langgraph.checkpoint.memory import MemorySaver
+from typing import TypedDict
+class Agentstate(TypedDict):
+    goal:str
+    plan:str
+def generate_plan(state: AgentState):
+    print(f"\n🤖 Agent is thinking about goal: '{state['goal']}'...")
+    return {"plan": "print('Hello from LangGraph Agent!')"}
+
+def execute_action(state: AgentState):
+    print(f"\n🚀 [Execution Node] Running code: {state['plan']}")
+    return state
