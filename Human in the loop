@@ -11,3 +11,9 @@ def generate_plan(state: AgentState):
 def execute_action(state: AgentState):
     print(f"\n🚀 [Execution Node] Running code: {state['plan']}")
     return state
+workflow = StateGraph(Agentstate)
+workflow.add_node("generate_plan",generate_plan)
+workflow.add_node("execute_action",execute_action)
+workflow.add_edge(START,"generate_plan")
+workflow.add_edge("generate_plan","execute_action")
+workflow.add_edge("execute_action",END)
