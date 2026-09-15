@@ -8,7 +8,6 @@ documents = [
 
 query = "how to fix error 404"
 
-
 # ==========================================
 # STEP 1: HYBRID SEARCH (Broad Retrieval)
 # ==========================================
@@ -20,13 +19,11 @@ def keyword_score(q, text):
       * 0.5
   )
 
-
 def vector_score(q, text):
   """Simulates Semantic / Vector embedding similarity."""
   # Mocking semantic match: higher if words overlap conceptually
   common_words = set(q.lower().split()).intersection(set(text.lower().split()))
   return len(common_words) * 0.3
-
 
 print("=== STEP 1: HYBRID SEARCH (Retrieving Top Candidates) ===")
 retrieved_pool = []
@@ -47,7 +44,6 @@ retrieved_pool = sorted(retrieved_pool, key=lambda x: x["score"], reverse=True)[
 
 for d in retrieved_pool:
   print(f"Doc {d['id']} | Hybrid Score: {d['score']:.2f} | Text: {d['text']}")
-
 
 # ==========================================
 # STEP 2: RERANKING (Deep Precision Check)
@@ -75,4 +71,4 @@ for doc in retrieved_pool:
 reranked_pool = sorted(reranked_pool, key=lambda x: x["score"], reverse=True)
 
 for d in reranked_pool:
-  print(f"Doc {d['id']} | Rerank Score: {d['score']:.2f} | Text: {d['text']}")
+  print(f"Doc {d['id']} | Rerank Score: {d['score']:.2f} | Text: {d['text']}")  
