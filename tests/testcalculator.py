@@ -16,4 +16,5 @@ def test_divide():
         divide(10, 0)
 
 def test_calculate_percentage():
+    
     assert calculate_percentage(750, 18) == 135.0
