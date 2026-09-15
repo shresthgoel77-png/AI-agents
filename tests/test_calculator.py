@@ -1,4 +1,10 @@
+import sys
+import os
 import pytest
+
+# Add the parent directory to sys.path so we can import calculator.py
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from calculator import add, subtract, multiply, divide, calculate_percentage
 
 def test_add():
@@ -16,5 +22,4 @@ def test_divide():
         divide(10, 0)
 
 def test_calculate_percentage():
-    
     assert calculate_percentage(750, 18) == 135.0
